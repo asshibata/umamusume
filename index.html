@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>いろいろ計算するやつ</title>
+    </head>
+    <body>
+        <div>ステ</div>
+        <div>
+            <label>馬場適正</label>
+            <select id="baba">
+                <option>S</option>
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+            </select>
+        </div>
+        <div>
+            <label>距離適正</label>
+            <select id="kyori">
+                <option>S</option>
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+            </select>
+        </div>
+        <div>
+            <label>脚質適正</label>
+            <select id="ashi">
+                <option>S</option>
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+            </select>
+        </div>
+        <div>
+            <label>作戦</label>
+            <select id="storategy">
+                <option>逃げ</option>
+                <option>先行</option>
+                <option>差し</option>
+                <option>追込</option>
+            </select>
+        </div>
+        <div>
+            <label>馬場状態（芝だけ）</label>
+            <select id="condition">
+                <option>良</option>
+                <option>稍重</option>
+                <option>重</option>
+                <option>不良</option>
+            </select>
+        </div>
+        <div>
+            <label>やる気</label>
+            <select id="tension">
+                <option>絶好調</option>
+                <option>好調</option>
+                <option>普通</option>
+                <option>不調</option>
+                <option>絶不調</option>
+            </select>
+        </div>
+        <div>
+            <label>スピード</label>
+            <input type="number" id="speed">
+        </div>
+        <div>
+            <label>スタミナ</label>
+            <input type="number" id="stamina">
+        </div>
+        <div>
+            <label>パワー</label>
+            <input type="number" id="power">
+        </div>
+        <div>
+            <label>根性</label>
+            <input type="number" id="konjo">
+        </div>
+        <div>
+            <label>賢さ</label>
+            <input type="number" id="kashikosa">
+        </div>
+        <div>
+            <label>コース距離</label>
+            <input type="number" id="courseLength">
+        </div>
+        <div>
+            <label>金回復スキルの個数</label>
+            <input type="number" id="goldHeal" value="0">
+        </div>
+        <div>
+            <label>白回復スキルの個数</label>
+            <input type="number" id="whiteHeal" value="0">
+        </div>
+        <div>
+            <button id="go">計算する</button>
+        </div>
+        <ul>
+            <li>補正後ステ</li>
+            <li>補正スピード値:<span id="speed2"></span></li>
+            <li>補正スタミナ値:<span id="stamina2"></span></li>
+            <li>補正パワー値:<span id="power2"></span></li>
+            <li>補正根性値:<span id="konjo2"></span></li>
+            <li>補正賢さ値:<span id="kashikosa2"></span></li>
+            <li>初期HP:<span id="hp"></span></li>
+            <li>金回復１個当たり回復HP:<span id="goldHealHP"></span></li>
+            <li>白回復１個当たり回復HP:<span id="whiteHealHP"></span></li>
+            <li>スキル込みHP:<span id="hp2"></span></li>
+            <li>基準速度:<span id="baseSpeed"></span>＃レース毎一定でウマに依らない</li>
+            <li>賢さによる24セクション分のランダム補正％:<span id="kashikosaRandom"></span></li>
+            <li>基本目標速度（0~4セクションまで）:<span id="baseTargetSpeed0"></span></li>
+            <li>基本目標速度（4~16セクションまで）:<span id="baseTargetSpeed1"></span></li>
+            <li>基本目標速度（16~20セクションまで）:<span id="baseTargetSpeed2"></span></li>
+            <li>基本目標速度（20~24セクションまで）:<span id="baseTargetSpeed3"></span></li>
+            <li>加速度（0~4セクションまで）:<span id="kasokudo0"></span></li>
+            <li>加速度（4~16セクションまで）:<span id="kasokudo1"></span></li>
+            <li>加速度（16~24セクションまで）:<span id="kasokudo2"></span></li>
+            <li>スキル発動率:<span id="skillEff"></span></li>
+        </ul>
+        <div>
+            <button id="run">走る</button>
+        </div>
+        <ul>
+            <li>セクション:<span id="section">0</span>/24</li>
+            <li>走った距離:<span id="ran">0</span></li>
+            <li>現在HP:<span id="restHP"></span></li>
+            <li>速度:<span id="fast">3</span>[m/s]</li>
+            <li>加速度:<span id="kasoku">0</span>[m/s^2]</li>
+            <li>ラストスパート状態:<span id="spart">false</span></li>
+            <li>経過時間:<span id="count">0</span></li>
+        </ul>
+    </body>
+    <script>
+        let section = 0;
+        let ran = 0;
+        let restHP;
+        let fast = 3;
+        // 初期値２４は何かの間違いだと思う
+        let kasoku = 0;
+        let spart = false;
+        let baba;
+        let kyori;
+        let ashi;
+        let storategy;
+        let condition;
+        let tension;
+        let speed;
+        let stamina;
+        let power;
+        let konjo;
+        let kashikosa;
+        let courseLength;
+        let tensEff;
+        let speed2;
+        let stamina2;
+        let power2;
+        let konjo2;
+        let kashikosa2;
+        let hp;
+        let baseSpeed;
+        let kashikosaRandom;
+        let baseTargetSpeed0;
+        let baseTargetSpeed1;
+        let baseTargetSpeed2;
+        let baseTargetSpeed3;
+        let kasokudo0;
+        let kasokudo1;
+        let kasokudo2;
+        let skillEff;
+        let goldHealHP;
+        let whiteHealHP;
+        let goldHeal;
+        let whiteHeal;
+        let hp2;
+        let count = 0;
+        let spartBaseSpeed;
+        let spartSpeed;
+        let damage;
+        document.querySelector("#go").addEventListener("click", main)
+        function calc() {
+            baba = document.querySelector("#baba").value
+            kyori = document.querySelector("#kyori").value
+            ashi = document.querySelector("#ashi").value
+            storategy = document.querySelector("#storategy").value
+            condition = document.querySelector("#condition").value
+            tension = document.querySelector("#tension").value
+            speed = +document.querySelector("#speed").value
+            stamina = +document.querySelector("#stamina").value
+            power = +document.querySelector("#power").value
+            konjo = +document.querySelector("#konjo").value
+            kashikosa = +document.querySelector("#kashikosa").value
+            courseLength = +document.querySelector("#courseLength").value
+            goldHeal = +document.querySelector("#goldHeal").value
+            whiteHeal = +document.querySelector("#whiteHeal").value
+            tensEff= getTensEff(tension)
+            speed2 = speed * tensEff * (1 + getCourseEff(speed * tensEff)) + ((baba) => {
+                switch(baba){
+                    case "不良":
+                        return -50;
+                    case "重":
+                        return 0;
+                    case "稍重":
+                        return 0;
+                    case "良":
+                        return 0;
+                    default:
+                        return 0;
+                }
+            })();
+            stamina2 = stamina * tensEff;
+            power2 = power * tensEff + ((baba) => {
+                switch(baba){
+                    case "不良":
+                        return -50;
+                    case "重":
+                        return -50;
+                    case "稍重":
+                        return -50;
+                    case "良":
+                        return 0;
+                    default:
+                        return 0;
+                }
+            })();
+            konjo2 = konjo * tensEff;
+            kashikosa2 = kashikosa * tensEff * getAshiEff(ashi);
+            hp = 0.8 * ((storategy) => {
+                switch(storategy){
+                    case "逃げ":
+                        return 0.95;
+                    case "先行":
+                        return 0.89;
+                    case "差し":
+                        return 1.0;
+                    case "追込":
+                        return 0.995;
+                    default:
+                        return 1.0;
+                }
+            })(storategy) * stamina2 + courseLength;
+            baseSpeed = 20 - (courseLength - 2000) / 1000;
+            kashikosaRandom = ((kashikosa2) => {
+                const result = [];
+                const sup = (kashikosa2 / 5500) * Math.log10(kashikosa2 * 0.1);
+                const inf = sup - 0.65;
+                for(let i = 0; i < 24; i++){
+                    result.push(Math.round((inf + 0.65 * Math.random())*1000)/1000);
+                }
+                return result;
+            })(kashikosa2);
+            baseTargetSpeed0 = ((kashikosaRandom) => {
+                const result = [];
+                for(let i = 0; i < 4; i++){
+                    result.push(baseSpeed * ((storategy)=>{
+                        switch(storategy){
+                            case "逃げ":
+                                return 1.0;
+                            case "先行":
+                                return 0.978;
+                            case "差し":
+                                return 0.938;
+                            case "追込":
+                                return 0.931;
+                            default:
+                                return 1.0;
+                        }
+                    })(storategy) * (100+kashikosaRandom[i])/100)
+                }
+                return result;
+            })(kashikosaRandom);
+            baseTargetSpeed0 = baseTargetSpeed0.map(val => Math.round(val*10000)/10000)
+            baseTargetSpeed1 = ((kashikosaRandom) => {
+                const result = [];
+                for(let i = 4; i < 16; i++){
+                    result.push(baseSpeed * ((storategy)=>{
+                        switch(storategy){
+                            case "逃げ":
+                                return 0.98;
+                            case "先行":
+                                return 0.991;
+                            case "差し":
+                                return 0.998;
+                            case "追込":
+                                return 1.0;
+                            default:
+                                return 1.0;
+                        }
+                    })(storategy) * (100+kashikosaRandom[i])/100)
+                }
+                return result;
+            })(kashikosaRandom);
+            baseTargetSpeed1 = baseTargetSpeed1.map(val => Math.round(val*10000)/10000)
+            baseTargetSpeed2 = ((kashikosaRandom) => {
+                const result = [];
+                for(let i = 16; i < 20; i++){
+                    result.push(baseSpeed * ((storategy)=>{
+                        switch(storategy){
+                            case "逃げ":
+                                return 0.962;
+                            case "先行":
+                                return 0.975;
+                            case "差し":
+                                return 0.994;
+                            case "追込":
+                                return 1.0;
+                            default:
+                                return 1.0;
+                        }
+                    })(storategy) * (100+kashikosaRandom[i])/100 + Math.sqrt(500*speed2) * ((kyori) => {
+                        switch(kyori){
+                            case "S":
+                                return 1.05;
+                            case "A":
+                                return 1;
+                            case "B":
+                                return 0.9;
+                            case "C":
+                                return 0.8;
+                            case "D":
+                                return 0.6;
+                            case "E":
+                                return 0.4;
+                            case "F":
+                                return 0.2;
+                            case "G":
+                                return 0.1;
+                            default:
+                                return 1.0;
+                        }
+                    })(kyori) * 0.002);
+                }
+                return result;
+            })(kashikosaRandom);
+            baseTargetSpeed2 = baseTargetSpeed2.map(val => Math.round(val*10000)/10000)
+            baseTargetSpeed3 = ((kashikosaRandom) => {
+                const result = [];
+                for(let i = 20; i < 24; i++){
+                    result.push(baseSpeed * ((storategy)=>{
+                        switch(storategy){
+                            case "逃げ":
+                                return 0.962;
+                            case "先行":
+                                return 0.975;
+                            case "差し":
+                                return 0.994;
+                            case "追込":
+                                return 1.0;
+                            default:
+                                return 1.0;
+                        }
+                    })(storategy) * (100+kashikosaRandom[i])/100 + Math.sqrt(500*speed2) * ((kyori) => {
+                        switch(kyori){
+                            case "S":
+                                return 1.05;
+                            case "A":
+                                return 1;
+                            case "B":
+                                return 0.9;
+                            case "C":
+                                return 0.8;
+                            case "D":
+                                return 0.6;
+                            case "E":
+                                return 0.4;
+                            case "F":
+                                return 0.2;
+                            case "G":
+                                return 0.1;
+                            default:
+                                return 1.0;
+                        }
+                    })(kyori) * 0.002);
+                }
+                return result;
+            })(kashikosaRandom);
+            baseTargetSpeed3 = baseTargetSpeed3.map(val => Math.round(val*10000)/10000)
+            kasokudo0 = 0.0006 * Math.sqrt(500 * power2) * ((storategy) => {
+                switch(storategy){
+                    case "逃げ":
+                        return 1.0;
+                    case "先行":
+                        return 0.985;
+                    case "差し":
+                        return 0.975;
+                    case "追込":
+                        return 0.945;
+                    default:
+                        return 1.0;
+                }
+            })(storategy) * ((baba) => {
+                switch(baba){
+                    case "S":
+                        return 1.05;
+                    case "A":
+                        return 1.0;
+                    case "B":
+                        return 0.9;
+                    case "C":
+                        return 0.8;
+                    case "D":
+                        return 0.6;
+                    case "E":
+                        return 0.4;
+                    case "F":
+                        return 0.2;
+                    case "G":
+                        return 0.1;
+                    default:
+                        return 1.0;
+                }
+            })(baba) * ((kyori) => {
+                switch(kyori){
+                    case "S":
+                    case "A":
+                    case "B":
+                    case "C":
+                    case "D":
+                        return 1.0;
+                    case "E":
+                        return 0.6;
+                    case "F":
+                        return 0.5;
+                    case "G":
+                        return 0.4;
+                    default:
+                        return 1.0;
+                }
+            })(kyori)
+            kasokudo1 = 0.0006 * Math.sqrt(500 * power2) * ((storategy) => {
+                switch(storategy){
+                    case "逃げ":
+                    case "先行":
+                    case "差し":
+                    case "追込":
+                        return 1.0;
+                    default:
+                        return 1.0;
+                }
+            })(storategy) * ((baba) => {
+                switch(baba){
+                    case "S":
+                        return 1.05;
+                    case "A":
+                        return 1.0;
+                    case "B":
+                        return 0.9;
+                    case "C":
+                        return 0.8;
+                    case "D":
+                        return 0.6;
+                    case "E":
+                        return 0.4;
+                    case "F":
+                        return 0.2;
+                    case "G":
+                        return 0.1;
+                    default:
+                        return 1.0;
+                }
+            })(baba) * ((kyori) => {
+                switch(kyori){
+                    case "S":
+                    case "A":
+                    case "B":
+                    case "C":
+                    case "D":
+                        return 1.0;
+                    case "E":
+                        return 0.6;
+                    case "F":
+                        return 0.5;
+                    case "G":
+                        return 0.4;
+                    default:
+                        return 1.0;
+                }
+            })(kyori)
+            kasokudo2 = 0.0006 * Math.sqrt(500 * power2) * ((storategy) => {
+                switch(storategy){
+                    case "逃げ":
+                        return 0.996;
+                    case "先行":
+                        return 0.996;
+                    case "差し":
+                        return 1.0;
+                    case "追込":
+                        return 0.997;
+                    default:
+                        return 1.0;
+                }
+            })(storategy) * ((baba) => {
+                switch(baba){
+                    case "S":
+                        return 1.05;
+                    case "A":
+                        return 1.0;
+                    case "B":
+                        return 0.9;
+                    case "C":
+                        return 0.8;
+                    case "D":
+                        return 0.6;
+                    case "E":
+                        return 0.4;
+                    case "F":
+                        return 0.2;
+                    case "G":
+                        return 0.1;
+                    default:
+                        return 1.0;
+                }
+            })(baba) * ((kyori) => {
+                switch(kyori){
+                    case "S":
+                    case "A":
+                    case "B":
+                    case "C":
+                    case "D":
+                        return 1.0;
+                    case "E":
+                        return 0.6;
+                    case "F":
+                        return 0.5;
+                    case "G":
+                        return 0.4;
+                    default:
+                        return 1.0;
+                }
+            })(kyori)
+            skillEff = Math.max(100-9000/(kashikosa*tensEff),20)
+            goldHealHP = hp * 0.055
+            whiteHealHP = hp * 0.015
+            hp2 = hp + goldHealHP * goldHeal + whiteHealHP * whiteHeal
+        }
+        getTensEff = (tension) => {
+            switch(tension){
+                case "絶好調":
+                    return 1.04;
+                case "好調":
+                    return 1.02;
+                case "普通":
+                    return 1.0;
+                case "不調":
+                    return 0.98;
+                case "絶不調":
+                    return 0.96;
+                default:
+                    return 1.0;
+            }
+        }
+        getCourseEff = (steXtens) => {
+            if(steXtens>0 && steXtens<=300)return 0.05
+            if(steXtens>300 && steXtens<=600)return 0.1
+            if(steXtens>600 && steXtens<=900)return 0.15
+            if(steXtens>900)return 0.2
+            return 0;
+        }
+        getAshiEff = (ashi) => {
+            switch(ashi){
+                case "S":
+                    return 1.1;
+                case "A":
+                    return 1.0;
+                case "B":
+                    return 0.85;
+                case "C":
+                    return 0.75;
+                case "D":
+                    return 0.6;
+                case "E":
+                    return 0.4;
+                case "F":
+                    return 0.2;
+                case "G":
+                    return 0.1;
+                default:
+                    return 1.0;
+            }
+        }
+        function main() {
+            calc();
+            mount();
+        }
+        function mount() {
+            document.querySelector("#speed2").innerHTML = speed2
+            document.querySelector("#stamina2").innerHTML = stamina2
+            document.querySelector("#power2").innerHTML = power2
+            document.querySelector("#konjo2").innerHTML = konjo2
+            document.querySelector("#kashikosa2").innerHTML = kashikosa2
+            document.querySelector("#hp").innerHTML = hp
+            document.querySelector("#baseSpeed").innerHTML = baseSpeed
+            document.querySelector("#kashikosaRandom").innerHTML = kashikosaRandom
+            document.querySelector("#baseTargetSpeed0").innerHTML = baseTargetSpeed0
+            document.querySelector("#baseTargetSpeed1").innerHTML = baseTargetSpeed1
+            document.querySelector("#baseTargetSpeed2").innerHTML = baseTargetSpeed2
+            document.querySelector("#baseTargetSpeed3").innerHTML = baseTargetSpeed3
+            document.querySelector("#kasokudo0").innerHTML = kasokudo0
+            document.querySelector("#kasokudo1").innerHTML = kasokudo1
+            document.querySelector("#kasokudo2").innerHTML = kasokudo2
+            document.querySelector("#skillEff").innerHTML = skillEff
+            document.querySelector("#goldHealHP").innerHTML = goldHealHP
+            document.querySelector("#whiteHealHP").innerHTML = whiteHealHP
+            document.querySelector("#hp2").innerHTML = hp2
+            document.querySelector("#section").innerHTML = section;
+            document.querySelector("#ran").innerHTML = ran
+            restHP = hp2
+            document.querySelector("#restHP").innerHTML = restHP
+            document.querySelector("#fast").innerHTML = fast
+            kasoku += kasokudo0
+            document.querySelector("#kasoku").innerHTML = kasoku
+            document.querySelector("#spart").innerHTML = spart
+            damage = getDamage(0)
+        }
+        document.querySelector("#run").addEventListener("click", run);
+        function run() {
+            const timer = setInterval(() => {
+                if(!runSec()){
+                    clearInterval(timer)
+                }
+            }, 500)
+        }
+        function runSec() {
+            if(section >= 24) return false;
+            restHP = restHP - damage
+            ran += fast;
+            let baseTargetSpeed;
+            if(section < 4){
+                // phase 0
+                baseTargetSpeed = baseTargetSpeed0[section]
+                damage = getDamage(0)
+                if(fast < baseTargetSpeed){
+                    fast += kasoku
+                } else {
+                    fast -= 1.2
+                }
+                kasoku = kasokudo0;
+            } else if(section < 16){
+                // phase 1
+                baseTargetSpeed = baseTargetSpeed1[section - 4]
+                damage = getDamage(1)
+                if(fast < baseTargetSpeed){
+                    fast += kasoku
+                } else {
+                    fast -= 0.8
+                }
+                kasoku = kasokudo1;
+            } else if(section < 20){
+                // phase 2
+                if(section == 16){
+                    spartBaseSpeed = fast;
+                }
+                if(!spart){
+                    spart = judgeSpart()
+                }
+                if(spart){
+                    baseTargetSpeed = spartSpeed
+                }else{
+                    baseTargetSpeed = baseTargetSpeed2[section - 16];
+                }
+                damage = getDamage(2)
+                if(fast < baseTargetSpeed){
+                    fast += kasoku
+                } else {
+                    fast -= 0.8
+                }
+                kasoku = kasokudo2;
+            } else{
+                // phase 3
+                if(courseLength - ran <= 60){
+                    spart = false
+                    baseTargetSpeed = baseTargetSpeed3[section - 20];
+                }else{
+                    baseTargetSpeed = spartSpeed
+                }
+                damage = getDamage(3)
+                if(fast < baseTargetSpeed){
+                    fast += kasoku
+                } else {
+                    fast -= 1.0
+                }
+                kasoku = kasokudo2;
+            }
+            count++;
+            section = Math.floor(ran / (courseLength / 24));
+            document.querySelector("#section").innerHTML = section;
+            document.querySelector("#ran").innerHTML = ran;
+            document.querySelector("#restHP").innerHTML = restHP;
+            document.querySelector("#fast").innerHTML = fast;
+            document.querySelector("#kasoku").innerHTML = kasoku;
+            document.querySelector("#spart").innerHTML = spart;
+            document.querySelector("#count").innerHTML = count;
+            return true;
+        }
+        function judgeSpart(){
+            spartSpeed = (spartBaseSpeed + 0.01 * baseSpeed) * 1.05 + Math.sqrt(500 * speed2) * ((kyori) => {
+                switch(kyori){
+                    case "S":
+                        return 1.05;
+                    case "A":
+                        return 1;
+                    case "B":
+                        return 0.9;
+                    case "C":
+                        return 0.8;
+                    case "D":
+                        return 0.6;
+                    case "E":
+                        return 0.4;
+                    case "F":
+                        return 0.2;
+                    case "G":
+                        return 0.1;
+                }
+            })(kyori) * 0.002
+            for(let f = spartSpeed; f >= spartBaseSpeed; f-=0.1){
+                let damagePerSec = 20 * Math.pow((f - baseSpeed + 12), 2) / 144 * ((condition) => {
+                    switch(condition){
+                        case "不良":
+                        case "重":
+                            return 1.02;
+                        case "稍重":
+                        case "良":
+                            return 1;
+                    }
+                })(condition) * (1 + 200 / Math.sqrt(600 * konjo2))
+                let maxDistance = restHP / damagePerSec * f;
+                if(ran + maxDistance >= courseLength - 60){
+                    spartSpeed = f
+                    return true
+                }
+            }
+            return false;
+        }
+        function getDamage(phase){
+            switch(phase){
+                case 0:
+                case 1:
+                    return 20.0 * Math.pow((fast - baseSpeed + 12), 2) / 144 * ((condition) => {
+                        switch(condition){
+                            case "不良":
+                            case "重":
+                                return 1.02;
+                            case "稍重":
+                            case "良":
+                                return 1;
+                        }
+                    })(condition)
+                case 2:
+                case 3:
+                    return 20.0 * Math.pow((fast - baseSpeed + 12), 2) / 144 * ((condition) => {
+                        switch(condition){
+                            case "不良":
+                            case "重":
+                                return 1.02;
+                            case "稍重":
+                            case "良":
+                                return 1;
+                        }
+                    })(condition) * (1 + 200 / Math.sqrt(600 * konjo2))
+
+            }
+        }
+    </script>
+</html>
